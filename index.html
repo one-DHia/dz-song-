@@ -99,27 +99,27 @@
         let audio = new Audio();
         let isPlaying = false;
 
-        // 1. Moteur de recherche (Optimisé)
+        // 1. Recherche via iTunes (Zéro erreur CORS)
         searchInput.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
                 const query = searchInput.value.trim();
                 if (!query) return;
 
-                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 animate-pulse">Recherche de "' + query + '"...</div>';
+                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 animate-pulse text-green-500">Recherche sur Apple Music...</div>';
 
                 try {
-                    // Utilisation d'un proxy plus simple et plus rapide
-                    const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.deezer.com/search?q=${query}`)}`);
+                    // API iTunes : Ultra rapide et autorisée partout
+                    const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=20`);
                     const data = await response.json();
 
-                    if (data.data && data.data.length > 0) {
-                        displayResults(data.data);
+                    if (data.results && data.results.length > 0) {
+                        displayResults(data.results);
                     } else {
-                        resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-gray-400">Aucun titre trouvé.</div>';
+                        resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-gray-400">Désolé, aucun morceau trouvé.</div>';
                     }
                 } catch (err) {
                     console.error(err);
-                    resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-red-500 font-bold">⚠️ Serveur occupé. Réessaye dans 2 secondes !</div>';
+                    resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-red-500 font-bold">⚠️ Erreur réseau. Vérifie ta connexion.</div>';
                 }
             }
         });
@@ -130,37 +130,50 @@
             tracks.forEach(track => {
                 const card = document.createElement('div');
                 card.className = "bg-zinc-900/50 p-3 rounded-xl hover:bg-zinc-800 transition cursor-pointer group";
+
+                // On remplace la taille de l'image pour avoir une haute résolution (100x100 -> 400x400)
+                const highResCover = track.artworkUrl100.replace('100x100bb', '400x400bb');
+
                 card.innerHTML = `
                 <div class="relative overflow-hidden rounded-lg mb-3">
-                    <img src="${track.album.cover_big}" class="w-full aspect-square object-cover transition transform group-hover:scale-105">
+                    <img src="${highResCover}" class="w-full aspect-square object-cover transition transform group-hover:scale-105">
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                         <i class="fa fa-play text-white text-3xl"></i>
                     </div>
                 </div>
-                <div class="font-bold text-sm truncate">${track.title}</div>
-                <div class="text-xs text-zinc-500 truncate">${track.artist.name}</div>
+                <div class="font-bold text-sm truncate">${track.trackName}</div>
+                <div class="text-xs text-zinc-500 truncate">${track.artistName}</div>
             `;
-                card.onclick = () => playTrack(track);
+
+                card.onclick = () => playTrack(track, highResCover);
                 resultsContainer.appendChild(card);
             });
         }
 
         // 3. Lecteur
-        function playTrack(track) {
-            audio.src = track.preview;
+        function playTrack(track, cover) {
+            audio.src = track.previewUrl;
             audio.play();
             isPlaying = true;
 
             playBtn.innerHTML = '<i class="fa fa-pause-circle"></i>';
-            currentCover.src = track.album.cover_medium;
-            currentTitle.innerText = track.title;
-            currentArtist.innerText = track.artist.name;
+            currentCover.src = cover;
+            currentTitle.innerText = track.trackName;
+            currentArtist.innerText = track.artistName;
 
             audio.ontimeupdate = () => {
-                const progress = (audio.currentTime / audio.duration) * 100;
-                progressBar.style.width = `${progress}%`;
+                if (audio.duration) {
+                    const progress = (audio.currentTime / audio.duration) * 100;
+                    progressBar.style.width = `${progress}%`;
+                }
             };
-        };
+
+            audio.onended = () => {
+                isPlaying = false;
+                playBtn.innerHTML = '<i class="fa fa-play-circle"></i>';
+                progressBar.style.width = '0%';
+            };
+        }
 
         playBtn.onclick = () => {
             if (!audio.src) return;
