@@ -99,27 +99,27 @@
         let audio = new Audio();
         let isPlaying = false;
 
-        // 1. Moteur de recherche
+        // 1. Moteur de recherche (Optimisé)
         searchInput.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
                 const query = searchInput.value.trim();
                 if (!query) return;
 
-                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10">Recherche en cours...</div>';
+                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 animate-pulse">Recherche de "' + query + '"...</div>';
 
                 try {
-                    // Utilisation d'un proxy plus performant pour éviter le CORS
-                    const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.deezer.com/search?q=${query}`)}`);
-                    const json = await response.json();
-                    const data = JSON.parse(json.contents);
+                    // Utilisation d'un proxy plus simple et plus rapide
+                    const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.deezer.com/search?q=${query}`)}`);
+                    const data = await response.json();
 
                     if (data.data && data.data.length > 0) {
                         displayResults(data.data);
                     } else {
-                        resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-gray-400">Aucun résultat...</div>';
+                        resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-gray-400">Aucun titre trouvé.</div>';
                     }
                 } catch (err) {
-                    resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-red-500">Erreur de connexion</div>';
+                    console.error(err);
+                    resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-red-500 font-bold">⚠️ Serveur occupé. Réessaye dans 2 secondes !</div>';
                 }
             }
         });
@@ -131,15 +131,15 @@
                 const card = document.createElement('div');
                 card.className = "bg-zinc-900/50 p-3 rounded-xl hover:bg-zinc-800 transition cursor-pointer group";
                 card.innerHTML = `
-                    <div class="relative overflow-hidden rounded-lg mb-3">
-                        <img src="${track.album.cover_big}" class="w-full aspect-square object-cover transition transform group-hover:scale-105">
-                        <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                            <i class="fa fa-play text-white text-2xl"></i>
-                        </div>
+                <div class="relative overflow-hidden rounded-lg mb-3">
+                    <img src="${track.album.cover_big}" class="w-full aspect-square object-cover transition transform group-hover:scale-105">
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                        <i class="fa fa-play text-white text-3xl"></i>
                     </div>
-                    <div class="font-bold text-sm truncate">${track.title}</div>
-                    <div class="text-xs text-zinc-500 truncate">${track.artist.name}</div>
-                `;
+                </div>
+                <div class="font-bold text-sm truncate">${track.title}</div>
+                <div class="text-xs text-zinc-500 truncate">${track.artist.name}</div>
+            `;
                 card.onclick = () => playTrack(track);
                 resultsContainer.appendChild(card);
             });
@@ -150,27 +150,17 @@
             audio.src = track.preview;
             audio.play();
             isPlaying = true;
-            updateUI(track);
-        }
 
-        function updateUI(track) {
             playBtn.innerHTML = '<i class="fa fa-pause-circle"></i>';
             currentCover.src = track.album.cover_medium;
             currentTitle.innerText = track.title;
             currentArtist.innerText = track.artist.name;
 
-            // Animation de la barre
             audio.ontimeupdate = () => {
                 const progress = (audio.currentTime / audio.duration) * 100;
                 progressBar.style.width = `${progress}%`;
             };
-
-            audio.onended = () => {
-                isPlaying = false;
-                playBtn.innerHTML = '<i class="fa fa-play-circle"></i>';
-                progressBar.style.width = '0%';
-            };
-        }
+        };
 
         playBtn.onclick = () => {
             if (!audio.src) return;
