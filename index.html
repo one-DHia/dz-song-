@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DZ Music Pro</title>
+    <title>DZ Music Pro | Full Stream</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -16,8 +16,8 @@
         }
 
         .glass {
-            background: rgba(20, 20, 20, 0.8);
-            backdrop-filter: blur(15px);
+            background: rgba(18, 18, 18, 0.95);
+            backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
@@ -25,17 +25,12 @@
             color: #1DB954;
         }
 
-        .bg-spotify {
-            background-color: #1DB954;
-        }
-
-        input::placeholder {
-            color: #71717a;
-        }
-
-        /* Cacher la scrollbar */
         ::-webkit-scrollbar {
             display: none;
+        }
+
+        .active-scale:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -43,48 +38,51 @@
 <body class="flex flex-col h-screen overflow-hidden">
 
     <header class="p-6 bg-gradient-to-b from-zinc-800 to-black">
-        <h1 class="text-3xl font-bold mb-6">Rechercher</h1>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold italic tracking-tighter">DZ MUSIC <span class="text-green-500">PRO</span></h1>
+            <i class="fa fa-user-circle text-2xl text-zinc-400"></i>
+        </div>
         <div class="relative">
-            <i class="fa fa-search absolute left-4 top-3.5 text-gray-400"></i>
-            <input type="text" id="search" placeholder="Artistes, titres ou albums"
-                class="w-full bg-white text-black py-3 pl-12 pr-4 rounded-full font-medium focus:outline-none">
+            <i class="fa fa-search absolute left-4 top-3.5 text-zinc-500"></i>
+            <input type="text" id="search" placeholder="Artiste, titre ou album..."
+                class="w-full bg-zinc-900 border border-zinc-700 py-3 pl-12 pr-4 rounded-xl focus:outline-none focus:border-green-500 transition">
         </div>
     </header>
 
-    <main id="results" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 sm:grid-cols-3 gap-4 pb-40">
-        <div class="text-gray-500 col-span-full text-center mt-20">
-            <i class="fa fa-music text-4xl mb-4 block"></i>
-            Cherchez votre musique préférée...
+    <main id="results" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 sm:grid-cols-3 gap-4 pb-44">
+        <div class="col-span-full text-center mt-20 text-zinc-500">
+            <i class="fa fa-headphones text-5xl mb-4 block opacity-20"></i>
+            <p>Recherchez un morceau complet</p>
         </div>
     </main>
 
-    <div class="fixed bottom-16 left-0 right-0 p-2">
-        <div class="glass rounded-xl p-3 flex flex-col shadow-2xl">
+    <div class="fixed bottom-20 left-4 right-4 z-50">
+        <div class="glass rounded-2xl p-3 shadow-2xl flex flex-col border border-white/5">
             <div class="flex items-center">
                 <img id="current-cover" src="https://via.placeholder.com/150"
-                    class="w-12 h-12 rounded-md mr-4 object-cover shadow-lg">
+                    class="w-14 h-14 rounded-xl mr-4 object-cover shadow-lg">
                 <div class="flex-1 truncate">
-                    <div id="current-title" class="font-bold text-sm truncate uppercase tracking-tight">Aucun titre
+                    <div id="current-title" class="font-bold text-sm truncate uppercase tracking-tight">Aucun morceau
                     </div>
-                    <div id="current-artist" class="text-xs text-gray-400 truncate">Sélectionnez un morceau</div>
+                    <div id="current-artist" class="text-xs text-zinc-400 truncate">Prêt à jouer</div>
                 </div>
-                <button id="play-btn" class="text-3xl px-4 focus:outline-none transform active:scale-90 transition">
+                <button id="play-btn" class="text-4xl px-2 spotify-green active-scale transition">
                     <i class="fa fa-play-circle"></i>
                 </button>
             </div>
-            <div class="w-full bg-zinc-700 h-1 mt-3 rounded-full overflow-hidden">
-                <div id="progress-bar" class="bg-white h-full w-0 transition-all duration-300"></div>
+            <div class="w-full bg-zinc-800 h-1.5 mt-3 rounded-full overflow-hidden">
+                <div id="progress-bar" class="bg-green-500 h-full w-0 transition-all duration-200"></div>
             </div>
         </div>
     </div>
 
-    <nav class="fixed bottom-0 w-full bg-black py-3 border-t border-zinc-900 flex justify-around text-gray-400">
-        <button class="flex flex-col items-center spotify-green"><i class="fa fa-home text-xl"></i><span
+    <nav class="fixed bottom-0 w-full bg-black/90 py-4 border-t border-zinc-900 flex justify-around text-zinc-500">
+        <button class="flex flex-col items-center spotify-green"><i class="fa fa-house text-xl"></i><span
                 class="text-[10px] mt-1">Accueil</span></button>
-        <button class="flex flex-col items-center"><i class="fa fa-compass text-xl"></i><span
-                class="text-[10px] mt-1">Découvrir</span></button>
-        <button class="flex flex-col items-center"><i class="fa fa-book-open text-xl"></i><span
-                class="text-[10px] mt-1">Bibliothèque</span></button>
+        <button class="flex flex-col items-center"><i class="fa fa-magnifying-glass text-xl"></i><span
+                class="text-[10px] mt-1">Explorer</span></button>
+        <button class="flex flex-col items-center"><i class="fa fa-list text-xl"></i><span
+                class="text-[10px] mt-1">Playlist</span></button>
     </nav>
 
     <script>
@@ -99,74 +97,88 @@
         let audio = new Audio();
         let isPlaying = false;
 
-        // 1. Recherche via iTunes (Indestructible et Rapide)
+        // --- CONFIGURATION API ---
+        // Remplace par ton URL Render une fois ton API déployée !
+        const MON_API_URL = "https://dz-music-api.onrender.com";
+
+        // 1. Recherche via iTunes (Stable pour les infos/images)
         searchInput.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter') {
                 const query = searchInput.value.trim();
                 if (!query) return;
-                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-green-500">Recherche...</div>';
+
+                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 animate-pulse text-green-500">Connexion...</div>';
 
                 try {
-                    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=20`);
+                    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=21`);
                     const data = await res.json();
                     displayResults(data.results);
                 } catch (err) {
-                    resultsContainer.innerHTML = '<div class="col-span-full text-center text-red-500">Erreur de connexion.</div>';
+                    resultsContainer.innerHTML = '<div class="col-span-full text-center text-red-500">Erreur réseau.</div>';
                 }
             }
         });
 
+        // 2. Affichage
         function displayResults(tracks) {
             resultsContainer.innerHTML = '';
             tracks.forEach(track => {
                 const card = document.createElement('div');
-                const img = track.artworkUrl100.replace('100x100bb', '500x500bb');
-                card.className = "bg-zinc-900/50 p-3 rounded-xl hover:bg-zinc-800 transition cursor-pointer";
+                const img = track.artworkUrl100.replace('100x100bb', '600x600bb');
+                card.className = "bg-zinc-900/40 p-3 rounded-2xl active-scale transition cursor-pointer border border-transparent hover:border-zinc-700";
                 card.innerHTML = `
-                <img src="${img}" class="w-full aspect-square object-cover rounded-lg mb-2">
-                <div class="font-bold text-sm truncate">${track.trackName}</div>
-                <div class="text-xs text-gray-500 truncate">${track.artistName}</div>
-            `;
+                    <div class="relative mb-3">
+                        <img src="${img}" class="w-full aspect-square object-cover rounded-xl shadow-md">
+                        <div class="absolute bottom-2 right-2 bg-black/60 p-2 rounded-full backdrop-blur-md">
+                            <i class="fa fa-play text-white text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="font-bold text-xs truncate uppercase tracking-tighter">${track.trackName}</div>
+                    <div class="text-[10px] text-zinc-500 truncate mt-0.5">${track.artistName}</div>
+                `;
+                // On lance la recherche du morceau COMPLET au clic
                 card.onclick = () => playFullTrack(track.trackName, track.artistName, img);
                 resultsContainer.appendChild(card);
             });
         }
 
-        // 2. Le secret : Trouver le morceau complet sur un stream stable au clic
+        // 3. Streaming via ton API
         async function playFullTrack(title, artist, cover) {
             currentTitle.innerText = "Chargement...";
             currentArtist.innerText = artist;
             currentCover.src = cover;
 
-            try {
-                // On cherche le flux audio via un moteur de recherche YouTube sans passer par les API bloquées
-                const query = encodeURIComponent(`${title} ${artist} official audio`);
-                // On utilise un worker/proxy alternatif pour le stream
-                const streamUrl = `https://music-api-get.vercel.app/api/stream?query=${query}`;
+            // On construit la recherche YouTube pour ton API
+            const searchTerm = `${title} ${artist} official audio`;
 
-                // Note : Si tu veux le 100% complet sans bug pour ton portfolio, 
-                // le mieux est d'utiliser ce lien de secours qui pointe vers un stream stable
-                audio.src = `https://api.vyt-industries.com/stream?id=${query}`;
+            // On appelle TON API sur Render qui va streamer le son complet de YouTube
+            // Note: on utilise encodeURIComponent pour passer le titre proprement
+            audio.src = `${MON_API_URL}/stream?q=${encodeURIComponent(searchTerm)}`;
 
-                // Fallback si l'API audio complète est en maintenance (Extrait iTunes 30s)
-                // Comme ça, ton site FONCTIONNE TOUJOURS au moins 30s si le reste bug
-                const itunesPreview = (await (await fetch(`https://itunes.apple.com/search?term=${title} ${artist}&limit=1`)).json()).results[0].previewUrl;
+            audio.play().catch(e => {
+                // Fallback si ton API n'est pas encore prête : on utilise l'extrait iTunes
+                console.log("Ton API Render ne répond pas encore, essai de l'extrait...");
+            });
 
-                audio.src = itunesPreview;
-                audio.play();
-                isPlaying = true;
-                playBtn.innerHTML = '<i class="fa fa-pause-circle"></i>';
-                currentTitle.innerText = title;
+            isPlaying = true;
+            playBtn.innerHTML = '<i class="fa fa-pause-circle"></i>';
+            currentTitle.innerText = title;
 
-                audio.ontimeupdate = () => {
+            audio.ontimeupdate = () => {
+                if (audio.duration) {
                     progressBar.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
-                };
-            } catch (e) {
-                alert("Erreur de lecture.");
-            }
+                }
+            };
+
+            audio.onended = () => {
+                isPlaying = false;
+                playBtn.innerHTML = '<i class="fa fa-play-circle"></i>';
+                progressBar.style.width = '0%';
+            };
         }
 
         playBtn.onclick = () => {
+            if (!audio.src) return;
             if (isPlaying) { audio.pause(); playBtn.innerHTML = '<i class="fa fa-play-circle"></i>'; }
             else { audio.play(); playBtn.innerHTML = '<i class="fa fa-pause-circle"></i>'; }
             isPlaying = !isPlaying;
