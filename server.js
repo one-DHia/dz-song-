@@ -1,41 +1,50 @@
 const express = require('express');
-const ytdl = require('@distube/ytdl-core');
 const ytSearch = require('yt-search');
 const cors = require('cors');
 const app = express();
 
-app.use(cors({
-    origin: '*', // Autorise toutes les sources à lire l'audio
-    methods: ['GET'],
-    allowedHeaders: ['Content-Type']
-}));
+// Configuration CORS pour autoriser ton site Netlify
+app.use(cors());
 
 app.get('/stream', async (req, res) => {
     try {
-        const query = req.query.q; // On récupère le nom de la musique (ex: "Soolking Casanova")
+        const query = req.query.q;
         if (!query) return res.status(400).send("Recherche manquante");
+
+        console.log(`Recherche pour : ${query}`);
 
         // 1. On cherche la vidéo sur YouTube
         const r = await ytSearch(query);
-        const video = r.videos[0]; // On prend le premier résultat
+        const video = r.videos[0];
 
-        if (!video) return res.status(404).send("Aucun morceau trouvé");
+        if (!video) {
+            return res.status(404).send("Aucun morceau trouvé");
+        }
 
-        // 2. On configure le header audio
-        res.setHeader('Content-Type', 'audio/mpeg');
+        const videoId = video.videoId;
+        console.log(`Lancement du stream pour l'ID : ${videoId}`);
 
-        // 3. On stream le son complet de YouTube vers ton site
-        ytdl(video.url, {
-            filter: 'audioonly',
-            quality: 'highestaudio',
-            highWaterMark: 1 << 25
-        }).pipe(res);
+        /**
+         * LE SECRET : Le Redirect
+         * Au lieu de télécharger la musique sur Render (qui est bloqué par Google),
+         * on redirige le navigateur vers un flux audio direct (itag 140 = Audio M4A).
+         */
+        const streamUrl = `https://inv.tux.rs/latest_version?id=${videoId}&itag=140`;
+
+        res.redirect(streamUrl);
 
     } catch (err) {
-        console.error(err);
-        res.status(500).send("Erreur de streaming");
+        console.error('Erreur Serveur:', err);
+        res.status(500).send("Erreur interne du serveur");
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 API Musique Ready sur le port ${PORT}`));
+// Route de test pour vérifier si le serveur est vivant
+app.get('/', (req, res) => {
+    res.send("✅ DZ Music API est en ligne !");
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+    console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+});
