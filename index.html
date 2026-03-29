@@ -88,104 +88,88 @@
     </nav>
 
     <script>
-        const searchInput = document.getElementById('search');
-        const resultsContainer = document.getElementById('results');
-        const playBtn = document.getElementById('play-btn');
-        const currentCover = document.getElementById('current-cover');
-        const currentTitle = document.getElementById('current-title');
-        const currentArtist = document.getElementById('current-artist');
-        const progressBar = document.getElementById('progress-bar');
+        <script>
+            const searchInput = document.getElementById('search');
+            const resultsContainer = document.getElementById('results');
+            const playBtn = document.getElementById('play-btn');
+            const currentCover = document.getElementById('current-cover');
+            const currentTitle = document.getElementById('current-title');
+            const currentArtist = document.getElementById('current-artist');
+            const progressBar = document.getElementById('progress-bar');
 
-        let audio = new Audio();
-        let isPlaying = false;
+            let audio = new Audio();
+            let isPlaying = false;
 
-        // 1. Recherche via iTunes (Zéro erreur CORS)
-        searchInput.addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter') {
-                const query = searchInput.value.trim();
-                if (!query) return;
+    // 1. Recherche de morceaux complets (via YouTube/Invidious)
+    searchInput.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            const query = searchInput.value.trim();
+            if (!query) return;
 
-                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 animate-pulse text-green-500">Recherche sur Apple Music...</div>';
+            resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 animate-bounce text-green-500">Chargement du morceau complet...</div>';
 
-                try {
-                    // API iTunes : Ultra rapide et autorisée partout
-                    const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=20`);
-                    const data = await response.json();
-
-                    if (data.results && data.results.length > 0) {
-                        displayResults(data.results);
-                    } else {
-                        resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-gray-400">Désolé, aucun morceau trouvé.</div>';
-                    }
-                } catch (err) {
-                    console.error(err);
-                    resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-red-500 font-bold">⚠️ Erreur réseau. Vérifie ta connexion.</div>';
+            try {
+                // On utilise une instance Invidious publique pour chercher
+                const response = await fetch(`https://inv.tux.rs/api/v1/search?q=${encodeURIComponent(query + " official audio")}&type=video`);
+            const tracks = await response.json();
+                
+                if (tracks && tracks.length > 0) {
+                displayResults(tracks);
+                } else {
+                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-gray-400">Aucun morceau trouvé.</div>';
                 }
+            } catch (err) {
+                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-red-500">Erreur serveur. Réessaie.</div>';
             }
-        });
+        }
+    });
 
-        // 2. Affichage
-        function displayResults(tracks) {
-            resultsContainer.innerHTML = '';
-            tracks.forEach(track => {
-                const card = document.createElement('div');
-                card.className = "bg-zinc-900/50 p-3 rounded-xl hover:bg-zinc-800 transition cursor-pointer group";
+            // 2. Affichage
+            function displayResults(tracks) {
+                resultsContainer.innerHTML = '';
+        tracks.forEach(track => {
+            const card = document.createElement('div');
+            card.className = "bg-zinc-900/50 p-3 rounded-xl hover:bg-zinc-800 transition cursor-pointer group";
 
-                // On remplace la taille de l'image pour avoir une haute résolution (100x100 -> 400x400)
-                const highResCover = track.artworkUrl100.replace('100x100bb', '400x400bb');
-
-                card.innerHTML = `
-                <div class="relative overflow-hidden rounded-lg mb-3">
-                    <img src="${highResCover}" class="w-full aspect-square object-cover transition transform group-hover:scale-105">
+            card.innerHTML = `
+            <div class="relative overflow-hidden rounded-lg mb-3">
+                <img src="${track.videoThumbnails[0].url}" class="w-full aspect-square object-cover">
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                         <i class="fa fa-play text-white text-3xl"></i>
                     </div>
-                </div>
-                <div class="font-bold text-sm truncate">${track.trackName}</div>
-                <div class="text-xs text-zinc-500 truncate">${track.artistName}</div>
+            </div>
+            <div class="font-bold text-sm truncate">${track.title}</div>
+            <div class="text-xs text-zinc-500 truncate">${track.author}</div>
             `;
+            
+            card.onclick = () => playTrack(track);
+            resultsContainer.appendChild(card);
+        });
+    }
 
-                card.onclick = () => playTrack(track, highResCover);
-                resultsContainer.appendChild(card);
-            });
-        }
-
-        // 3. Lecteur
-        function playTrack(track, cover) {
-            audio.src = track.previewUrl;
+            // 3. Lecture du flux AUDIO UNIQUEMENT
+            function playTrack(track) {
+                // Lien magique pour récupérer juste l'audio du morceau complet
+                audio.src = `https://inv.tux.rs/latest_version?id=${track.videoId}&itag=140`;
             audio.play();
             isPlaying = true;
 
             playBtn.innerHTML = '<i class="fa fa-pause-circle"></i>';
-            currentCover.src = cover;
-            currentTitle.innerText = track.trackName;
-            currentArtist.innerText = track.artistName;
-
-            audio.ontimeupdate = () => {
-                if (audio.duration) {
-                    const progress = (audio.currentTime / audio.duration) * 100;
-                    progressBar.style.width = `${progress}%`;
-                }
-            };
-
-            audio.onended = () => {
-                isPlaying = false;
-                playBtn.innerHTML = '<i class="fa fa-play-circle"></i>';
-                progressBar.style.width = '0%';
-            };
-        }
-
-        playBtn.onclick = () => {
-            if (!audio.src) return;
-            if (isPlaying) {
-                audio.pause();
-                playBtn.innerHTML = '<i class="fa fa-play-circle"></i>';
-            } else {
-                audio.play();
-                playBtn.innerHTML = '<i class="fa fa-pause-circle"></i>';
-            }
-            isPlaying = !isPlaying;
+            currentCover.src = track.videoThumbnails[0].url;
+            currentTitle.innerText = track.title;
+            currentArtist.innerText = track.author;
+        
+        audio.ontimeupdate = () => {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            progressBar.style.width = `${progress}%`;
         };
+    }
+
+    playBtn.onclick = () => {
+        if (isPlaying) {audio.pause(); playBtn.innerHTML = '<i class="fa fa-play-circle"></i>'; }
+            else {audio.play(); playBtn.innerHTML = '<i class="fa fa-pause-circle"></i>'; }
+            isPlaying = !isPlaying;
+    };
     </script>
 </body>
 
