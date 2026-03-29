@@ -99,39 +99,53 @@
         let audio = new Audio();
         let isPlaying = false;
 
-        // 1. Recherche via Piped API (Plus stable pour le complet)
-        searchInput.addEventListener('keypress', async (e) => {
+        // Liste d'instances Piped stables (on en a plusieurs au cas où)
+        const instances = [
+            "https://pipedapi.kavin.rocks",
+            "https://api.piped.victr.me",
+            "https://pipedapi.rivo.pw"
+        ];
+
+        // 1. Fonction de recherche avec secours (Fallback)
+        async function searchMusic(query, instanceIndex = 0) {
+            if (instanceIndex >= instances.length) {
+                resultsContainer.innerHTML = '<div class="col-span-full text-center text-red-500">Tous les serveurs sont occupés. Réessaye plus tard.</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${instances[instanceIndex]}/search?q=${encodeURIComponent(query)}&filter=music_songs`);
+                const data = await response.json();
+
+                if (data.items && data.items.length > 0) {
+                    displayResults(data.items, instances[instanceIndex]);
+                } else {
+                    resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-gray-400">Aucun résultat trouvé.</div>';
+                }
+            } catch (err) {
+                console.log(`Serveur ${instanceIndex} en panne, essai du suivant...`);
+                searchMusic(query, instanceIndex + 1); // On passe au serveur suivant
+            }
+        }
+
+        searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const query = searchInput.value.trim();
                 if (!query) return;
-
-                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 animate-pulse text-green-500">Recherche de morceaux complets...</div>';
-
-                try {
-                    const response = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=music_songs`);
-                    const data = await response.json();
-
-                    if (data.items && data.items.length > 0) {
-                        displayResults(data.items);
-                    } else {
-                        resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-gray-400">Aucun résultat.</div>';
-                    }
-                } catch (err) {
-                    resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 text-red-500">Erreur réseau. Réessaye.</div>';
-                }
+                resultsContainer.innerHTML = '<div class="col-span-full text-center mt-10 animate-pulse text-green-500 font-bold">Connexion au serveur sécurisé...</div>';
+                searchMusic(query);
             }
         });
 
-        // 2. Affichage
-        function displayResults(tracks) {
+        // 2. Affichage des résultats
+        function displayResults(tracks, activeInstance) {
             resultsContainer.innerHTML = '';
             tracks.forEach(track => {
                 const card = document.createElement('div');
-                card.className = "bg-zinc-900/50 p-3 rounded-xl hover:bg-zinc-800 transition cursor-pointer group";
-
+                card.className = "bg-zinc-900/50 p-3 rounded-xl hover:bg-zinc-800 transition cursor-pointer group shadow-lg";
                 card.innerHTML = `
                 <div class="relative overflow-hidden rounded-lg mb-3">
-                    <img src="${track.thumbnail}" class="w-full aspect-square object-cover">
+                    <img src="${track.thumbnail}" class="w-full aspect-square object-cover transition transform group-hover:scale-110">
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                         <i class="fa fa-play text-white text-3xl"></i>
                     </div>
@@ -139,27 +153,26 @@
                 <div class="font-bold text-sm truncate">${track.title}</div>
                 <div class="text-xs text-zinc-500 truncate">${track.uploaderName}</div>
             `;
-
-                card.onclick = () => playTrack(track);
+                card.onclick = () => playTrack(track, activeInstance);
                 resultsContainer.appendChild(card);
             });
         }
 
-        // 3. Lecture Audio
-        async function playTrack(track) {
+        // 3. Lecture du flux complet
+        async function playTrack(track, instance) {
             try {
-                // On récupère le lien stream réel
-                const res = await fetch(`https://pipedapi.kavin.rocks/streams/${track.url.split('=')[1]}`);
+                const videoId = track.url.split('=')[1];
+                const res = await fetch(`${instance}/streams/${videoId}`);
                 const streamData = await res.json();
 
-                // On prend le flux audio uniquement (m4a)
+                // On cherche le flux audio de meilleure qualité
                 const audioStream = streamData.audioStreams.find(s => s.format === 'M4A') || streamData.audioStreams[0];
 
                 audio.src = audioStream.url;
                 audio.play();
                 isPlaying = true;
 
-                playBtn.innerHTML = '<i class="fa fa-pause-circle"></i>';
+                playBtn.innerHTML = '<i class="fa fa-pause-circle text-white"></i>';
                 currentCover.src = track.thumbnail;
                 currentTitle.innerText = track.title;
                 currentArtist.innerText = track.uploaderName;
@@ -169,13 +182,15 @@
                     progressBar.style.width = `${progress}%`;
                 };
             } catch (e) {
-                alert("Erreur lors de la lecture du flux.");
+                console.error("Erreur de lecture : ", e);
+                alert("Ce serveur ne peut pas lire le morceau. Réessaye une autre musique.");
             }
         }
 
         playBtn.onclick = () => {
-            if (isPlaying) { audio.pause(); playBtn.innerHTML = '<i class="fa fa-play-circle"></i>'; }
-            else { audio.play(); playBtn.innerHTML = '<i class="fa fa-pause-circle"></i>'; }
+            if (!audio.src) return;
+            if (isPlaying) { audio.pause(); playBtn.innerHTML = '<i class="fa fa-play-circle text-white"></i>'; }
+            else { audio.play(); playBtn.innerHTML = '<i class="fa fa-pause-circle text-white"></i>'; }
             isPlaying = !isPlaying;
         };
     </script>
