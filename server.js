@@ -4,7 +4,11 @@ const ytSearch = require('yt-search');
 const cors = require('cors');
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: '*', // Autorise toutes les sources à lire l'audio
+    methods: ['GET'],
+    allowedHeaders: ['Content-Type']
+}));
 
 app.get('/stream', async (req, res) => {
     try {
